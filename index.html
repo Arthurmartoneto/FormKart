@@ -112,8 +112,48 @@
             accent-color: #007BFF;
         }
 
+        #mensagem {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 300px;
+            max-width: 90%;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .mensagem-sucesso {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .mensagem-erro {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .mensagem-visivel {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .mensagem-oculta {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
     </style>
 </head>
+
+<div id="mensagem" class="mensagem-oculta"></div>
 
 <body>
     <div class="container">
@@ -134,19 +174,30 @@
             <input type="text" name="entry.1833321040" placeholder="000.000.000-00" required>
 
             <label>E-mail</label>
-            <input type="email" name="entry.80619121" placeholder="seuemail@exemplo.com" required>
+            <input type="email" name="entry.1897132596" placeholder="seuemail@exemplo.com" required>
 
             <label>Data de Nascimento</label>
-            <input type="date" name="entry.1061295464" required>
+            <input type="text" name="entry.1061295464" required>
 
             <label>Endereço Completo</label>
             <input type="text" name="entry.899857458" placeholder="Rua, número, cidade" required>
 
             <label>Telefone / Whatsapp</label>
-            <input type="text" name="entry.899857458" placeholder="(99) 99999-9999" required>
+            <input type="text" name="entry.1158874055" placeholder="(99) 99999-9999" required>
 
             <label>Em caso de acidente avisar:</label>
-            <input type="text" name="entry.1158874055" placeholder="Nome e telefone de emergência" required>
+            <input type="text" name="entry.880797509" placeholder="Nome e telefone de emergência" required>
+
+            <h1>Em Caso de Menores de Idade</h1>
+
+            <label>Nome Completo</label>
+            <input type="text" name="entry.1445710226" placeholder="Ex: João da Silva">
+
+            <label>CPF</label>
+            <input type="text" name="entry.1445710226" placeholder="000.000.000-00">
+
+            <label>Data de Nascimento (Menor de Idade)</label>
+            <input type="date" name="entry.80619121">
 
             <label>DECLARO:</label>
             <div class="checkbox-group">
@@ -172,6 +223,7 @@
 
     <script>
         const form = document.getElementById('kartForm');
+        const mensagem = document.getElementById('mensagem');
         const formKey = 'kartFormData';
 
         // Preenche os dados salvos automaticamente
@@ -185,6 +237,18 @@
             }
         };
 
+        function mostrarMensagem(texto, tipo = 'sucesso') {
+            mensagem.textContent = texto;
+            mensagem.className = `mensagem-visivel ${tipo === 'erro' ? 'mensagem-erro' : 'mensagem-sucesso'}`;
+
+            setTimeout(() => {
+                mensagem.classList.add('mensagem-oculta');
+                setTimeout(() => {
+                    mensagem.className = 'mensagem-oculta';
+                }, 500);
+            }, 4000);
+        }
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -193,14 +257,28 @@
             data.forEach((value, key) => obj[key] = value);
             localStorage.setItem(formKey, JSON.stringify(obj));
 
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerText = "Enviando...";
+
+            const timeout = setTimeout(() => {
+                mostrarMensagem('Erro ao enviar. Verifique a conexão.', 'erro');
+                submitButton.disabled = false;
+                submitButton.innerText = "Enviar";
+            }, 5000);
+
             fetch('https://docs.google.com/forms/d/e/1FAIpQLSfsf_UqIL42pkCNSS-IdC6J96QBPMjsKGo7OrY7sJ1TaIweeQ/formResponse', {
                 method: 'POST',
                 mode: 'no-cors',
                 body: data
+            }).then(() => {
+                clearTimeout(timeout);
+                mostrarMensagem('Formulário enviado com sucesso!');
+                form.reset();
+                submitButton.disabled = false;
+                submitButton.innerText = "Enviar";
+                localStorage.removeItem(formKey);
             });
-
-            alert('Formulário enviado com sucesso!');
-            form.reset();
         });
     </script>
 </body>
